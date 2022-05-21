@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <script src="https://libs.cartocdn.com/carto-vl/v1.4.4/carto-vl.min.js"></script>
+        <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js"></script>
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css" rel="stylesheet" />
+        <link href="https://carto.com/developers/carto-vl/v1.4.4/examples/maps/style.css" rel="stylesheet">
+        <link href='Mapbox_example9_styles.css' rel='stylesheet' />
+
+        <style>
+            body { margin: 0; padding: 0; }
+            #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+            #slider { width: 100%; }
+            .radio_class { width: 5%; margin: 2px; margin-top: 10px; margin-right: 8px; padding-top: 10px; }
+            .radio_lab { width: 5%; margin: 2px; margin-top: 10px; }
+            #year { margin-left: 10px; }
+            #unit1 { margin-bottom: 0px; margin-top: 0px; }
+        </style>  
+    </head>
+    
+    
+    <body>
+        <div id="map"></div>
+
+            <div class='map-overlay top'>
+
+                <div class='map-overlay-inner'>
+                    
+                    <h2 id='header2'>Global Coal Consumption Data</h2>
+
+                    <p><select id="CategoryMenu"></select></p>  
+                    
+                    <div class='color-intensity'>
+                        <p id='unit1'></p>
+                    </div>
+
+                    <table>
+                        <tr>
+                            <td>
+                                <input id='slider' type='range' min='0' max='48' step='1' value='0' list='tickmarks' />
+                                <datalist id="tickmarks">
+                                    <option value="0" label="1965">
+                                    <option value="1">
+                                    <option value="2">
+                                    <option value="3">
+                                    <option value="4" label="1969">
+                                    <option value="5">
+                                    <option value="6">
+                                    <option value="7">
+                                    <option value="8">
+                                    <option value="9" label="1974">
+                                    <option value="10">
+                                    <option value="11">
+                                    <option value="12">
+                                    <option value="13">
+                                    <option value="14">
+                                    <option value="15" label="1980">
+                                    <option value="16">
+                                    <option value="17">
+                                    <option value="18">
+                                    <option value="19">
+                                    <option value="20" label="1985">
+                                    <option value="21">
+                                    <option value="22">
+                                    <option value="23">
+                                    <option value="24">
+                                    <option value="25" label="1990">
+                                    <option value="26">
+                                    <option value="27">
+                                    <option value="28">
+                                    <option value="29">
+                                    <option value="30" label="1995">
+                                    <option value="31">
+                                    <option value="32">
+                                    <option value="33">
+                                    <option value="34">
+                                    <option value="35" label="2000">
+                                    <option value="36">
+                                    <option value="37">
+                                    <option value="38">
+                                    <option value="39">
+                                    <option value="40" label="2005">
+                                    <option value="41">
+                                    <option value="42">
+                                    <option value="43">
+                                    <option value="44">
+                                    <option value="45">
+                                    <option value="46">
+                                    <option value="47">
+                                    <option value="48" label="2013">
+                                </datalist>
+                            </td>
+                            <td>
+                                <label id='year'>1965</label>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <button class="btn_control" id="btn_play">
+                        <pbutton>Play</pbutton>
+                    </button>
+
+                    <button class="btn_control" id="btn_pause">
+                        <pbutton>Pause</pbutton>
+                    </button>
+                    
+                    <div id="radios">
+                        <label class="radio_lab">Global: </label><input type="radio" class="radio_class" name="country" id="Global" value="1" onclick="ZoomWorld(this)"/>
+                        <label class="radio_lab">USA: </label><input type="radio" class="radio_class" name="country" id="USA" value="2" onclick="ZoomWorld(this)"/>
+                        <label class="radio_lab">China: </label><input type="radio" class="radio_class" name="country" id="China" value="3" onclick="ZoomWorld(this)"/>
+                        <label class = "radio_lab">UK: </label><input type="radio" class="radio_class" name="country" id="UK" value="4" onclick="ZoomWorld(this)"/>
+                    </div>
+                    
+                    <p class="credit">Energy Consumption Data: <a href="https://github.com/owid/energy-data">Energy Data</a>.</p>
+                    <p class="credit">Data Unit: terawatt/hour</p>
+
+                </div>
+
+            </div>
+
+            <script>
+                
+
+                // Add Mapbox basemap and set properties
+                const map = new mapboxgl.Map({
+                    container: 'map',
+                    // the style of basemap is from carto here.
+                    style: carto.basemaps.positron,
+                    center: [23, 32],
+                    zoom: 2
+                });
+                
+                // Add navigation controls
+                const nav = new mapboxgl.NavigationControl();
+                map.addControl(nav, 'top-left');
+                map.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+
+                function ZoomWorld(selectedValue) {
+                    if(selectedValue.value === '1') {
+                        map.flyTo({center: [23, 32], zoom: 2});
+                    } else if(selectedValue.value === '2'){
+                        map.flyTo({center: [-98, 39], zoom: 4});
+                    } else if(selectedValue.value === '3') {
+                        map.flyTo({center: [105,35], zoom: 4});
+                    } else if(selectedValue.value === '4') {
+                        map.flyTo({center: [-2.6, 53.7], zoom: 5});
+                    }
+                }
+                
+                // Create an array of the available data years.
+                var years = ['1965','1966','1967','1968','1969','1970','1971','1972','1973','1974','1975','1976','1977','1978','1979','1980','1981','1982','1983','1984','1985','1986','1987','1988','1989','1990','1991','1992','1993','1994','1995','1996','1997','1998','1999','2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012','2013'];       
+                var consumptionMenu = document.getElementById("CategoryMenu");
+                var categoryList = ['Coal Consumption', 'Oil Consumption', 'Gas Consumption', 'Low Carbon Comsumption'];
+                var indexList = [0, 1, 2, 3];
+                
+                for(var i = 0; i < categoryList.length; i++) {
+                // we are creating a new element called option and store it in a variable.
+                var el = document.createElement("option");
+                // we need to define what will be displayed in drop down list. (City and country name)
+                el.textContent = categoryList[i];
+                // but the actual value the user inputs is the index of each row.
+                el.value = indexList[i];
+                // Now, append all the properties of 'el' variable to 'cityMenu' which is a dropdown list. 
+                consumptionMenu.appendChild(el);
+                };       
+
+                //** CARTO VL functionality begins here **//
+
+                // Define user. API Key requires access to the Geolife dataset
+                carto.setDefaultAuth({
+                    username: 'seren-sx',
+                    apiKey: 'a6def0888dd27fc54207ad82a31180f37dc1d9d9'
+                });
+                
+                var viz_coal;
+                var viz_gas;
+                var viz_oil;
+                var viz_carbon;
+                
+                var layer;
+                var source = new carto.source.Dataset('coal_consumption');
+                var currentViz = 'coal';
+                initializeLayer();
+                
+                var spaces = '&nbsp;';
+                
+                for (i = 0 ; i < 65 ; i ++ ) {
+                    spaces += '&nbsp;';
+                }
+                
+                assignUnits(currentViz);
+                
+                function assignUnits(currentViz) {                      
+                    if(currentViz === 'coal') {
+                        document.getElementById('unit1').innerHTML = '0 TWh' + spaces + '23000 TWh';
+                    } else if(currentViz === 'gas') {
+                        document.getElementById('unit1').innerHTML = '0 TWh' + spaces + '7000 TWh';
+                    } else if(currentViz === 'carbon') {
+                    document.getElementById('unit1').innerHTML = '0 TWh' + spaces + '4500 TWh';
+                    } else if(currentViz === 'oil') {
+                    document.getElementById('unit1').innerHTML = '0 TWh' + spaces + '9600 TWh';
+                    }
+                };
+                
+                document.getElementById("CategoryMenu").onchange = function() {    
+                    var x = document.getElementById("CategoryMenu").value;
+                    
+                    if(x === '0') {
+                        if(map.getLayer('layer_coal')) {
+                            setInvisibleLayers();
+                            map.setLayoutProperty('layer_coal', 'visibility', 'visible');
+                            currentViz = 'coal';
+                            document.getElementById('header2').innerHTML = 'Global Coal Consumption Data';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        } else {
+                            // Define data source here.
+                            setInvisibleLayers();
+                            source = new carto.source.Dataset('coal_consumption');
+                            assignViz('coal');
+                            currentViz = 'coal';
+                            assignLayer(x, 'coal');
+                            document.getElementById('header2').innerHTML = 'Global Coal Consumption Data';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        }
+                    } else if(x === '1') {
+                        if(map.getLayer('layer_oil')) {
+                            setInvisibleLayers();
+                            map.setLayoutProperty('layer_oil', 'visibility', 'visible');
+                            currentViz = 'oil';
+                            document.getElementById('header2').innerHTML = 'Global Oil Consumption Data';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        } else {
+                            // Define data source here.
+                            setInvisibleLayers();
+                            source = new carto.source.Dataset('oil_with_geo');
+                            document.getElementById('header2').innerHTML = 'Global Oil Consumption Data';
+                            assignViz('oil');
+                            assignLayer(x, 'oil');
+                            currentViz = 'oil';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        }
+                    } else if(x === '2') {
+                        if(map.getLayer('layer_gas')) {
+                            setInvisibleLayers();
+                            map.setLayoutProperty('layer_gas', 'visibility', 'visible');
+                            document.getElementById('header2').innerHTML = 'Global Gas Consumption Data';
+                            currentViz = 'gas';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        } else {
+                            // Define data source here.
+                            setInvisibleLayers();
+                            source = new carto.source.Dataset('gas_consumption');
+                            document.getElementById('header2').innerHTML = 'Global Gas Consumption Data';
+                            assignViz('gas');
+                            currentViz = 'gas';
+                            assignLayer(x, 'gas');
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        }
+                    } else if(x === '3') {
+                        if(map.getLayer('layer_carbon')) {
+                            setInvisibleLayers();
+                            map.setLayoutProperty('layer_carbon', 'visibility', 'visible');
+                            document.getElementById('header2').innerHTML = 'Global Low Carbon Consumption Data';
+                            currentViz = 'carbon';
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        } else {
+                            // Define data source here.
+                            setInvisibleLayers();
+                            source = new carto.source.Dataset('lowcarbon_withgeo');
+                            document.getElementById('header2').innerHTML = 'Global Low Carbon Consumption Data';
+                            assignViz('carbon');
+                            currentViz = 'carbon';
+                            assignLayer(x, 'carbon');
+                            pause_slider();
+                            reset_slider(currentViz);
+                            assignUnits(currentViz);
+                        }   
+                    };
+                };
+                
+                function setInvisibleLayers() {
+                    if(map.getLayer('layer_coal')) {
+                        map.setLayoutProperty('layer_coal', 'visibility', 'none');
+                    }
+                    if(map.getLayer('layer_gas')) {
+                        map.setLayoutProperty('layer_gas', 'visibility', 'none');
+                    }
+                    if(map.getLayer('layer_oil')) {
+                        map.setLayoutProperty('layer_oil', 'visibility', 'none');   
+                    }
+                    if(map.getLayer('layer_carbon')) {
+                        map.setLayoutProperty('layer_carbon', 'visibility', 'none');
+                    }
+                };
+                
+                function initializeLayer(){
+                    assignViz('coal');
+                    assignLayer('0', 'coal');
+                    setYear('0', 'coal')
+                };
+                
+                function assignViz(consType) {
+                    if(consType === 'coal') {
+                        viz_coal = new carto.Viz(`
+                            @ee1965: $field_2
+                            @ee1966: $field_3
+                            @ee1967: $field_4
+                            @ee1968: $field_5
+                            @ee1969: $field_6
+                            @ee1970: $field_7
+                            @ee1971: $field_8
+                            @ee1972: $field_9
+                            @ee1973: $field_10
+                            @ee1974: $field_11
+                            @ee1975: $field_12
+                            @ee1976: $field_13
+                            @ee1977: $field_14
+                            @ee1978: $field_15
+                            @ee1979: $field_16
+                            @ee1980: $field_17
+                            @ee1981: $field_18
+                            @ee1982: $field_19
+                            @ee1983: $field_20
+                            @ee1984: $field_21
+                            @ee1985: $field_22
+                            @ee1986: $field_23
+                            @ee1987: $field_24
+                            @ee1988: $field_25
+                            @ee1989: $field_26
+                            @ee1990: $field_27
+                            @ee1991: $field_28
+                            @ee1992: $field_29
+                            @ee1993: $field_30
+                            @ee1994: $field_31
+                            @ee1995: $field_32
+                            @ee1996: $field_33
+                            @ee1997: $field_34
+                            @ee1998: $field_35
+                            @ee1999: $field_36
+                            @ee2000: $field_37
+                            @ee2001: $field_38
+                            @ee2002: $field_39
+                            @ee2003: $field_40
+                            @ee2004: $field_41
+                            @ee2005: $field_42
+                            @ee2006: $field_43
+                            @ee2007: $field_44
+                            @ee2008: $field_45
+                            @ee2009: $field_46
+                            @ee2010: $field_47
+                            @ee2011: $field_48
+                            @ee2012: $field_49
+                            @ee2013: $field_50
+                            color: ramp(@ee1965, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `);         
+                    } else if (consType === 'gas') {
+                        viz_gas = new carto.Viz(`
+                            @ee1965: $field_2
+                            @ee1966: $field_3
+                            @ee1967: $field_4
+                            @ee1968: $field_5
+                            @ee1969: $field_6
+                            @ee1970: $field_7
+                            @ee1971: $field_8
+                            @ee1972: $field_9
+                            @ee1973: $field_10
+                            @ee1974: $field_11
+                            @ee1975: $field_12
+                            @ee1976: $field_13
+                            @ee1977: $field_14
+                            @ee1978: $field_15
+                            @ee1979: $field_16
+                            @ee1980: $field_17
+                            @ee1981: $field_18
+                            @ee1982: $field_19
+                            @ee1983: $field_20
+                            @ee1984: $field_21
+                            @ee1985: $field_22
+                            @ee1986: $field_23
+                            @ee1987: $field_24
+                            @ee1988: $field_25
+                            @ee1989: $field_26
+                            @ee1990: $field_27
+                            @ee1991: $field_28
+                            @ee1992: $field_29
+                            @ee1993: $field_30
+                            @ee1994: $field_31
+                            @ee1995: $field_32
+                            @ee1996: $field_33
+                            @ee1997: $field_34
+                            @ee1998: $field_35
+                            @ee1999: $field_36
+                            @ee2000: $field_37
+                            @ee2001: $field_38
+                            @ee2002: $field_39
+                            @ee2003: $field_40
+                            @ee2004: $field_41
+                            @ee2005: $field_42
+                            @ee2006: $field_43
+                            @ee2007: $field_44
+                            @ee2008: $field_45
+                            @ee2009: $field_46
+                            @ee2010: $field_47
+                            @ee2011: $field_48
+                            @ee2012: $field_49
+                            @ee2013: $field_50
+                            color: ramp(@ee1965, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `); 
+                    } else if(consType === 'oil') {
+                        viz_oil = new carto.Viz(`
+                            @ee1965: $_1965
+                            @ee1966: $_1966
+                            @ee1967: $field_5
+                            @ee1968: $field_6
+                            @ee1969: $field_7
+                            @ee1970: $field_8
+                            @ee1971: $field_9
+                            @ee1972: $field_10
+                            @ee1973: $field_11
+                            @ee1974: $field_12
+                            @ee1975: $field_13
+                            @ee1976: $field_14
+                            @ee1977: $field_15
+                            @ee1978: $field_16
+                            @ee1979: $field_17
+                            @ee1980: $field_18
+                            @ee1981: $field_19
+                            @ee1982: $field_20
+                            @ee1983: $field_21
+                            @ee1984: $field_22
+                            @ee1985: $field_23
+                            @ee1986: $field_24
+                            @ee1987: $field_25
+                            @ee1988: $field_26
+                            @ee1989: $field_27
+                            @ee1990: $field_28
+                            @ee1991: $field_29
+                            @ee1992: $field_30
+                            @ee1993: $field_31
+                            @ee1994: $field_32
+                            @ee1995: $field_33
+                            @ee1996: $field_34
+                            @ee1997: $field_35
+                            @ee1998: $field_36
+                            @ee1999: $field_37
+                            @ee2000: $field_38
+                            @ee2001: $field_39
+                            @ee2002: $field_40
+                            @ee2003: $field_41
+                            @ee2004: $field_42
+                            @ee2005: $field_43
+                            @ee2006: $field_44
+                            @ee2007: $field_45
+                            @ee2008: $field_46
+                            @ee2009: $field_47
+                            @ee2010: $field_48
+                            @ee2011: $field_49
+                            @ee2012: $field_50
+                            @ee2013: $field_51
+                            color: ramp(@ee1965, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `);
+                    } else if (consType === 'carbon') {
+                        viz_carbon = new carto.Viz(`
+                            @ee1965: $field_3
+                            @ee1966: $field_4
+                            @ee1967: $field_5
+                            @ee1968: $field_6
+                            @ee1969: $field_7
+                            @ee1970: $field_8
+                            @ee1971: $field_9
+                            @ee1972: $field_10
+                            @ee1973: $field_11
+                            @ee1974: $field_12
+                            @ee1975: $field_13
+                            @ee1976: $field_14
+                            @ee1977: $field_15
+                            @ee1978: $field_16
+                            @ee1979: $field_17
+                            @ee1980: $field_18
+                            @ee1981: $field_19
+                            @ee1982: $field_20
+                            @ee1983: $field_21
+                            @ee1984: $field_22
+                            @ee1985: $field_23
+                            @ee1986: $field_24
+                            @ee1987: $field_25
+                            @ee1988: $field_26
+                            @ee1989: $field_27
+                            @ee1990: $field_28
+                            @ee1991: $field_29
+                            @ee1992: $field_30
+                            @ee1993: $field_31
+                            @ee1994: $field_32
+                            @ee1995: $field_33
+                            @ee1996: $field_34
+                            @ee1997: $field_35
+                            @ee1998: $field_36
+                            @ee1999: $field_37
+                            @ee2000: $field_38
+                            @ee2001: $field_39
+                            @ee2002: $field_40
+                            @ee2003: $field_41
+                            @ee2004: $field_42
+                            @ee2005: $field_43
+                            @ee2006: $field_44
+                            @ee2007: $field_45
+                            @ee2008: $field_46
+                            @ee2009: $field_47
+                            @ee2010: $field_48
+                            @ee2011: $field_49
+                            @ee2012: $field_50
+                            @ee2013: $field_51
+                            color: ramp(@ee1965, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `);
+                    };
+                };
+                
+                function assignLayer(x, type) {
+                    if(x === '0' || x === '2') {
+                        if(type === 'coal') {
+                            layer = new carto.Layer('layer_coal', source, viz_coal);
+                            layer.addTo(map);
+                        } else { 
+                            layer = new carto.Layer('layer_gas', source, viz_gas);
+                            layer.addTo(map);
+                        }
+                    } else if (x === '1' || x === '3') {
+                        if(type === 'oil') {                            
+                            layer = new carto.Layer('layer_oil', source, viz_oil);
+                            layer.addTo(map);
+                        } else {
+                            layer = new carto.Layer('layer_carbon', source, viz_carbon);
+                            layer.addTo(map);
+                        }
+                    }
+                };
+                
+                var button_play = document.getElementById("btn_play");
+                var button_pause = document.getElementById("btn_pause");
+                var slider_value = document.getElementById("slider").value;
+                var interval;
+                button_pause.hidden = true;
+                
+                // Assign an event listner to the slider so that the setYear function runs when the user changes the slider
+                document.getElementById('slider').addEventListener('input', function(e) {
+                    slider_value = parseInt(e.target.value);
+                    update_slider();
+                });       
+
+                function reset_slider(currentViz) {
+                    document.getElementById("year").textContent = 5;
+                    slider_value = 0;
+                    document.getElementById("slider").value = 0;
+                    setYear(0, currentViz);
+                };
+
+                function pause_slider() {
+                    clearInterval(interval);
+                    button_pause.hidden=true;
+                    button_play.hidden=false;
+                };
+
+                function update_slider() {
+                    document.getElementById("slider").value = slider_value;
+                    document.getElementById("year").textContent = years[slider_value];
+                    setYear(slider_value, currentViz);
+                };
+
+                button_pause.addEventListener("click", function() {
+                    pause_slider();
+                });
+
+                button_play.addEventListener("click", function() {
+                    button_pause.hidden = false;
+                    button_play.hidden = true;
+
+                    interval = setInterval(function(){
+                        if(parseInt(slider_value) === parseInt('48')) {
+                            reset_slider();
+                            update_slider();
+                        } else {
+                            slider_value++;
+                            update_slider();
+                        }                             
+                    }, 450);
+                });
+                          
+                // This is the main function that runs when the user changes the data year.
+                function setYear(year, consumpType) {
+                    // Set the label to the correct year.
+                    document.getElementById('year').textContent = years[year];
+
+                    //console.log(pp);
+                    var yearcolumn = "@ee" + years[year];
+                    console.log(yearcolumn);
+                    //var widthexp = yearcolumn + "*1.3";
+                    var colorexp = "ramp(" + yearcolumn + ", [ rgba(0,177,106,1), rgba(255,99,71,1) ])";
+                    // changes the color and width property of 'viz1'.
+                    //layer1.blendToViz(newViz,2000);
+                    if (consumpType === 'coal') {
+                        viz_coal.color.blendTo(colorexp,300);
+                    } else if(consumpType === 'gas') {
+                        viz_gas.color.blendTo(colorexp,300);
+                    } else if(consumpType === 'oil') {
+                        viz_oil.color.blendTo(colorexp,300);
+                    } else if(consumpType === 'carbon') {
+                        viz_carbon.color.blendTo(colorexp,300);
+                    }
+                };     
+                
+        </script>
+    </body>
+</html>

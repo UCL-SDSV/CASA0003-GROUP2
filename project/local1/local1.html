@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <script src="https://libs.cartocdn.com/carto-vl/v1.4.4/carto-vl.min.js"></script>
+        <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js"></script>
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css" rel="stylesheet" />
+        <link href="https://carto.com/developers/carto-vl/v1.4.4/examples/maps/style.css" rel="stylesheet">
+        <link href='Mapbox_example9_styles.css' rel='stylesheet' />
+
+        <style>
+            body { margin: 0; padding: 0; }
+            #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+            #slider { width: 220px; }
+            .radio_class { width: 5%; margin: 2px; margin-top: 10px; margin-right: 8px; padding-top: 10px; }
+            .radio_lab { width: 5%; margin: 2px; margin-top: 10px; }
+            #year { margin-left: -100px; }
+            #unit1 { margin-bottom: 0px; margin-top: 0px; }
+        </style>  
+    </head>
+    
+    
+    <body>
+        <div id="map"></div>
+
+            <div class='map-overlay top'>
+
+                <div class='map-overlay-inner'>
+                    
+                    <h2 id='header2'>Local CO2 Emission Data</h2>
+
+                    <div class='color-intensity'>
+                        <p id='unit1'></p>
+                    </div>
+
+                    <table>
+                        <tr>
+                            <td>
+                                <input id='slider' type='range' min='0' max='35' step='1' value='0' list='tickmarks' />
+                                <datalist id="tickmarks">
+                                    <option value="0">
+                                    <option value="1">
+                                    <option value="2">
+                                    <option value="3">
+                                    <option value="4">
+                                    <option value="5">
+                                    <option value="6">
+                                    <option value="7">
+                                    <option value="8">
+                                    <option value="9">
+                                    <option value="10">
+                                    <option value="11">
+                                    <option value="12">
+                                    <option value="13">
+                                    <option value="14">
+                                    <option value="15">
+                                    <option value="16">
+                                    <option value="17">
+                                    <option value="18">
+                                    <option value="19">
+                                    <option value="20">
+                                    <option value="21">
+                                    <option value="22">
+                                    <option value="23">
+                                    <option value="24">
+                                    <option value="25">
+                                    <option value="26">
+                                    <option value="27">
+                                    <option value="28">
+                                    <option value="29">
+                                    <option value="30">
+                                    <option value="31">
+                                    <option value="32">
+                                    <option value="33">
+                                    <option value="34">
+                                    <option value="35">
+                                </datalist>
+                            </td>
+                            <td>
+                                <label id='year'></label>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <button class="btn_control" id="btn_play">
+                        <pbutton>Play</pbutton>
+                    </button>
+
+                    <button class="btn_control" id="btn_pause">
+                        <pbutton>Pause</pbutton>
+                    </button>
+                    
+                    <div id="radios">
+                        <label class="radio_lab">USA: </label><input type="radio" class="radio_class" name="country" id="USA" value="1" onclick="ZoomWorld(this)"/>
+                        <label class="radio_lab">China: </label><input type="radio" class="radio_class" name="country" id="China" value="2" onclick="ZoomWorld(this)"/>
+                    </div>
+                    
+                    <p class="credit">CO2 Emission Data: <a href="https://github.com/owid/co2-data">Emmission Data</a>.</p>
+                    <p class="credit">Data Unit: ton per capita</p>
+
+                </div>
+
+            </div>
+
+            <script>
+
+                // Add Mapbox basemap and set properties
+                const map = new mapboxgl.Map({
+                    container: 'map',
+                    // the style of basemap is from carto here.
+                    style: carto.basemaps.positron,
+                    center: [105,35],
+                    zoom: 3
+                });
+                
+                // Define user. API Key requires access to the Geolife dataset
+                carto.setDefaultAuth({
+                    username: 'seren-sx',
+                    apiKey: 'a6def0888dd27fc54207ad82a31180f37dc1d9d9'
+                });
+                                
+                // Create an array of the available data years.
+                var years = ['jan_2019','feb_2019','mar_2019','apr_2019','may_2019','jun_2019','jul_2019','aug_2019','sep_2019','oct_2019','nov_2019','dec_2019','jan_2020','feb_2020','mar_2020','apr_2020','may_2020','jun_2020','jul_2020','aug_2020','sep_2020','oct_2020','nov_2020','dec_2020','jan_2021','feb_2021','mar_2021','apr_2021','may_2021','jun_2021','jul_2021','aug_2021','sep_2021','oct_2021','nov_2021','dec_2021'];
+
+                var spaces = '&nbsp;';
+                
+                for (i = 0 ; i < 77 ; i ++ ) {
+                    spaces += '&nbsp;';
+                }
+                
+                // Add navigation controls
+                const nav = new mapboxgl.NavigationControl();
+                map.addControl(nav, 'top-left');
+                map.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+
+                var currentViz = 'china';
+                document.getElementById("China").checked = true;
+                
+                var layer;
+                var source1;
+                var source2;
+                var viz_china_carbon;
+                var viz_us_carbon;
+                
+                assignViz('china');
+                assignLayer('china');
+                currentViz = 'china';
+                reset_slider();
+                document.getElementById('unit1').innerHTML = '0 t' + spaces + '10000 t';
+                
+                function ZoomWorld(selectedValue) {
+                    if(selectedValue.value === '1'){
+                        if(map.getLayer('layer_us_carbon')) {
+                            setInvisibleLayers();
+                            setVisibleLayers('us');
+                            currentViz = 'us';
+                            reset_slider();
+                            document.getElementById('unit1').innerHTML = '0 t' + spaces + '6000 t';
+                        } else {
+                            assignViz('us');
+                            assignLayer('us');
+                            setInvisibleLayers();
+                            setVisibleLayers('us');
+                            currentViz = 'us';
+                            reset_slider();
+                            document.getElementById('unit1').innerHTML = '0 t' + spaces + '6000 t';
+                        }
+                        map.flyTo({center: [-98, 39], zoom: 3.5});
+                    } else if(selectedValue.value === '2') {
+                        if(map.getLayer('layer_china_carbon')) {
+                            setInvisibleLayers();
+                            setVisibleLayers('china');
+                            currentViz = 'china';
+                            reset_slider();
+                            document.getElementById('unit1').innerHTML = '0 t' + spaces + '10000 t';
+                        } else {
+                            assignViz('china');
+                            assignLayer('china');
+                            setInvisibleLayers();
+                            setVisibleLayers('china');
+                            currentViz = 'china';
+                            reset_slider();
+                            document.getElementById('unit1').innerHTML = '0 TWh' + spaces + '10000 TWh';
+                        }
+                        map.flyTo({center: [105,35], zoom: 3.5});
+                    }
+                };
+
+                //** CARTO VL functionality begins here **//
+
+
+                
+                function assignViz(country) {
+                    if(country === 'china') {     
+                        source1 = new carto.source.Dataset('china_carbon_geo_1');
+                        viz_china_carbon = new carto.Viz(`
+                            @eejan_2019: $jan_2019
+                            @eefeb_2019: $feb_2019
+                            @eemar_2019: $mar_2019
+                            @eeapr_2019: $apr_2019
+                            @eemay_2019: $may_2019
+                            @eejun_2019: $jun_2019
+                            @eejul_2019: $jul_2019
+                            @eeaug_2019: $aug_2019
+                            @eesep_2019: $sep_2019
+                            @eeoct_2019: $oct_2019
+                            @eenov_2019: $nov_2019
+                            @eedec_2019: $dec_2019
+                            @eejan_2020: $jan_2020
+                            @eefeb_2020: $feb_2020
+                            @eemar_2020: $mar_2020
+                            @eeapr_2020: $apr_2020
+                            @eemay_2020: $may_2020
+                            @eejun_2020: $jun_2020
+                            @eejul_2020: $jul_2020
+                            @eeaug_2020: $aug_2020
+                            @eesep_2020: $sep_2020
+                            @eeoct_2020: $oct_2020
+                            @eenov_2020: $nov_2020
+                            @eedec_2020: $dec_2020
+                            @eejan_2021: $jan_2021
+                            @eefeb_2021: $feb_2021
+                            @eemar_2021: $mar_2021
+                            @eeapr_2021: $apr_2021
+                            @eemay_2021: $may_2021
+                            @eejun_2021: $jun_2021
+                            @eejul_2021: $jul_2021
+                            @eeaug_2021: $aug_2021
+                            @eesep_2021: $sep_2021
+                            @eeoct_2021: $oct_2021
+                            @eenov_2021: $nov_2021
+                            @eedec_2021: $dec_2021
+                            color: ramp(@eejan_2019, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `);         
+                    } else if (country === 'us') {
+                        source2 = new carto.source.Dataset('us_carbon_geo_1');
+                        viz_us_carbon = new carto.Viz(`
+                            @eejan_2019: $jan_2019
+                            @eefeb_2019: $feb_2019
+                            @eemar_2019: $mar_2019
+                            @eeapr_2019: $apr_2019
+                            @eemay_2019: $may_2019
+                            @eejun_2019: $jun_2019
+                            @eejul_2019: $jul_2019
+                            @eeaug_2019: $aug_2019
+                            @eesep_2019: $sep_2019
+                            @eeoct_2019: $oct_2019
+                            @eenov_2019: $nov_2019
+                            @eedec_2019: $dec_2019
+                            @eejan_2020: $jan_2020
+                            @eefeb_2020: $feb_2020
+                            @eemar_2020: $mar_2020
+                            @eeapr_2020: $apr_2020
+                            @eemay_2020: $may_2020
+                            @eejun_2020: $jun_2020
+                            @eejul_2020: $jul_2020
+                            @eeaug_2020: $aug_2020
+                            @eesep_2020: $sep_2020
+                            @eeoct_2020: $oct_2020
+                            @eenov_2020: $nov_2020
+                            @eedec_2020: $dec_2020
+                            @eejan_2021: $jan_2021
+                            @eefeb_2021: $feb_2021
+                            @eemar_2021: $mar_2021
+                            @eeapr_2021: $apr_2021
+                            @eemay_2021: $may_2021
+                            @eejun_2021: $jun_2021
+                            @eejul_2021: $jul_2021
+                            @eeaug_2021: $aug_2021
+                            @eesep_2021: $sep_2021
+                            @eeoct_2021: $oct_2021
+                            @eenov_2021: $nov_2021
+                            @eedec_2021: $dec_2021
+                            color: ramp(@eejan_2019, [ rgba(0,177,106,1), rgba(255,99,71,1) ])
+                        `); 
+                    }
+                };
+                
+                function assignLayer(country) {
+                    if(country === 'china') {
+                        var layer = new carto.Layer('layer_china_carbon', source1, viz_china_carbon);
+                        layer.addTo(map);
+                    } else if(country === 'us') {
+                        var layer = new carto.Layer('layer_us_carbon', source2, viz_us_carbon);
+                        layer.addTo(map);
+                    }
+                };
+
+                function setInvisibleLayers() {
+                    map.setLayoutProperty('layer_china_carbon', 'visibility', 'none');
+                    
+                    if(map.getLayer('layer_us_carbon')){
+                        map.setLayoutProperty('layer_us_carbon', 'visibility', 'none');
+                    }
+                };
+                
+                function setVisibleLayers(country) {
+                    if(country === 'china') {
+                        map.setLayoutProperty('layer_china_carbon', 'visibility', 'true');
+                    } else {
+                        map.setLayoutProperty('layer_us_carbon', 'visibility', 'true');
+                    }
+                };
+                
+                var button_play = document.getElementById("btn_play");
+                var button_pause = document.getElementById("btn_pause");
+                var slider_value = document.getElementById("slider").value;
+                var interval;
+                button_pause.hidden = true;
+                
+                // Assign an event listner to the slider so that the setYear function runs when the user changes the slider
+                document.getElementById('slider').addEventListener('input', function(e) {
+                    slider_value = parseInt(e.target.value);
+                    update_slider();
+                });       
+
+                function reset_slider() {
+                    slider_value = 0;
+                    document.getElementById("slider").value = 0;
+                    setYear(0, currentViz);
+                };
+
+                function pause_slider() {
+                    clearInterval(interval);
+                    button_pause.hidden=true;
+                    button_play.hidden=false;
+                };
+
+                function update_slider() {
+                    document.getElementById("slider").value = slider_value;
+                    document.getElementById("year").textContent = years[slider_value];
+                    setYear(slider_value, currentViz);
+                };
+
+                button_pause.addEventListener("click", function() {
+                    pause_slider();
+                });
+
+                button_play.addEventListener("click", function() {
+                    button_pause.hidden = false;
+                    button_play.hidden = true;
+
+                    interval = setInterval(function(){
+                        if(parseInt(slider_value) === parseInt('35')) {
+                            reset_slider();
+                            update_slider();
+                        } else {
+                            slider_value++;
+                            update_slider();
+                        }                             
+                    }, 450);
+                });
+                          
+                // This is the main function that runs when the user changes the data year.
+                function setYear(year, currentViz) {
+                    // Set the label to the correct year.
+                    document.getElementById('year').textContent = years[year];
+
+                    //console.log(pp);
+                    var yearcolumn = "@ee" + years[year];
+                    console.log(yearcolumn );
+                    if(currentViz === 'china') {
+                        var multi = yearcolumn + "*0.025";
+                    } else {
+                        var multi = yearcolumn + "*0.045";
+                    }
+                    var colorexp = "ramp(" + multi + ", [ rgba(0,177,106,1), rgba(255,99,71,1) ])";
+                    // changes the color and width property of 'viz1'.
+                    //layer1.blendToViz(newViz,2000);
+                    if(currentViz === 'china') {
+                        viz_china_carbon.color.blendTo(colorexp,300);
+                    } else {
+                        viz_us_carbon.color.blendTo(colorexp,300);
+                    }
+                };     
+                
+        </script>
+    </body>
+</html>
